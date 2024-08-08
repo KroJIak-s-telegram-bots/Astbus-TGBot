@@ -1,0 +1,25 @@
+{
+    "users": {
+        "1250991011": {
+            "login": "krojiak",
+            "fullname": "Андрей Растопшин",
+            "permission": "default",
+            "removedMessageIds": [
+                1385,
+                1386
+            ],
+            "startMessageId": 1366,
+            "busMessageId": null,
+            "favourites": [
+                "190"
+            ],
+            "usedBuses": {
+                "190": 13
+            }
+        }
+    },
+    "permissions": {
+        "0": "default",
+        "1": "admin"
+    }
+}

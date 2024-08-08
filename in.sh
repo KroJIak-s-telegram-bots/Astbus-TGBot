@@ -1,0 +1,1 @@
+docker container exec -it astbusbot-container  "/bin/bash"

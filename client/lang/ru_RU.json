@@ -1,0 +1,35 @@
+{
+  "start.message": "Привет, %{}%!\nЯ - бот, который поможет тебе не опоздать на нужный ближайший автобус.",
+  "success.message": "Операция успешно выполнена.",
+  "error.message": "<b>[Ошибка]:</b> <span class=\"tg-spoiler\">%{}%</span>",
+  "unknown.command.message": "Неизвестная команда.",
+  "permissions.cancel": "well well well...",
+
+  "bus.message.direction": "Выберите направление движения автобуса <b>%{}%</b>.",
+  "bus.message.tracking": "Отслеживается автобус <b>%{}%</b>",
+  "inputfield.message": "Введите номер автобуса...",
+  "incorrect.busname.message": "Неверное название автобуса.",
+
+  "buslist.message": "Доступные автобусы:",
+  "buslist.favourites.message": "Избранные автобусы:",
+  "buslist.favourites.message.empty": "Нет избранных автобусов.",
+
+  "busstoplist.message.available": "Доступные остановки:",
+  "busstoplist.message.success": "Остановка успешно найдена. Пожалуйста, подождите...",
+
+  "location.message.send": "Пожалуйста, нажмите на кнопку, чтобы отправить геолокацию.",
+  "location.message.success": "Геолокация успешно получена. Пожалуйста, подождите...",
+
+  "arrivaltimes.message.error": "Ошибка при попытке поиска. Повторите снова либо обратитесь к разработчику.",
+  "arrivaltimes.message.success": "Время прибытия автобуса <b>%{}%</b> на остановке <b>%{}%</b>:\n%{}%",
+  "arrivaltimes.message.empty": "На сегодня автобус <b>%{}%</b> закончил маршрут на остановке <b>%{}%</b>.",
+
+  "button.about": "Об боте",
+  "button.buses": "Автобусы",
+  "button.favourites": "Избранное",
+  "button.favourites.add": "Избранное",
+  "button.favourites.remove": "⭐\uFE0F Избранное ⭐\uFE0F",
+  "button.choose": "Выбрать",
+  "button.location": "Отправить локацию",
+  "button.busstop": "Указать остановку"
+}

@@ -1,0 +1,13 @@
+services:
+  astbusbot:
+    image: astbusbot-image:latest
+    build:
+      context: .
+    container_name: astbusbot-container
+    restart: always
+    volumes:
+      - ./client:/workspace/client
+      - ./db:/workspace/db
+      - ./utils:/workspace/utils
+    command: ["python3", "/workspace/client/bot.py"]
+
