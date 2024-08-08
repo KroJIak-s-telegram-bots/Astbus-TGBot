@@ -19,8 +19,8 @@ from utils.parser.main import MapsSession
 const = ConstPlenty()
 botConfig = getConfigObject(joinPath(const.path.config, const.file.config))
 const.addConstFromConfig(botConfig)
-logging.basicConfig(level=logging.INFO)
-# logging.basicConfig(level=logging.INFO, filename=joinPath(const.path.logs, getLogFileName()), filemode='w', format=const.logging.format)
+# logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, filename=joinPath(const.path.logs, getLogFileName()), filemode='w', format=const.logging.format)
 dbUsers = dbUsersWorker(joinPath(const.path.users, const.file.database))
 dbMoves = dbMovesWorker(joinPath(const.path.moves, const.file.database))
 dbLocal = dbLocalWorker()
@@ -51,7 +51,7 @@ def getUserInfo(message=None, callback=None, addRemovedMessage=True):
     if addRemovedMessage and message: dbUsers.addRemovedMessageIds(userInfo.userId, userInfo.messageId)
     userLogInfo = f'{userInfo} | {dbLocal.db[str(userInfo.userId)]}'
     logging.info(userLogInfo)
-    # print(userLogInfo)
+    print(userLogInfo)
     return userInfo
 
 async def removeLastMessageIds(userInfo):
