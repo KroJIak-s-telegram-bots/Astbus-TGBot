@@ -6,6 +6,7 @@ services:
     container_name: astbusbot-container
     restart: always
     volumes:
+      - ./cache:/workspace/cache
       - ./client:/workspace/client
       - ./db:/workspace/db
       - ./utils:/workspace/utils
