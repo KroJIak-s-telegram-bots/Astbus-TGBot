@@ -17,18 +17,19 @@ class User:
     def isAdmin(self):
         return self.permission == 'admin'
 
-class BusStop:
-    def __init__(self, dictBusStop):
-        self.directions = {int(key): value for key, value in dictBusStop['directions'].items()}
-
-class Bus:
-    def __init__(self, name, dictBus):
-        self.name = name
-        self.stops = BusStop(dictBus['stops'])
-        self.circularRoute = dictBus['circularRoute']
+class WayPoint:
+    def __init__(self, dictWayPoint):
+        self.index = dictWayPoint['index']
+        self.times = dictWayPoint['times']
 
 class Location:
-    def __init__(self, name, dictLocation):
-        self.name = name
+    def __init__(self, dictLocation):
         self.latitude = dictLocation['latitude']
         self.longitude = dictLocation['longitude']
+
+class BusStop:
+    def __init__(self, index, dictBusStop):
+        self.index = index
+        self.name = dictBusStop['name']
+        self.location = Location(dictBusStop['location'])
+

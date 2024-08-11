@@ -20,6 +20,7 @@ class Data(configCategoryObject):
         super().__init__(config, 'Data')
         self.defaultLang = self.get('defaultLang')
         self.availableBuses = sorted(self.get('availableBuses').split(';'))
+        self.timezone = self.get('timezone')
 
 class Logging:
     def __init__(self):

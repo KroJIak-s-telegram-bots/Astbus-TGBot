@@ -1,9 +1,10 @@
 
 from traceback import format_exc
+import datetime
 import asyncio
 import logging
 import json
-import shutil
+import pytz
 
 from aiogram import Bot, Dispatcher, types
 from aiogram.client.default import DefaultBotProperties
@@ -14,11 +15,11 @@ from utils.const import ConstPlenty
 from utils.funcs import joinPath, getConfigObject, getLogFileName, getDistanceByHaversine
 from utils.database import dbUsersWorker, dbMovesWorker, dbLocalWorker
 from utils.objects.client import UserInfo, CallbackUserInfo
-from utils.parser.main import MapsSession
 
 const = ConstPlenty()
 botConfig = getConfigObject(joinPath(const.path.config, const.file.config))
 const.addConstFromConfig(botConfig)
+timezone = pytz.timezone(const.data.timezone)
 # logging.basicConfig(level=logging.INFO)
 logging.basicConfig(level=logging.INFO, filename=joinPath(const.path.logs, getLogFileName()), filemode='w', format=const.logging.format)
 dbUsers = dbUsersWorker(joinPath(const.path.users, const.file.database))
@@ -75,6 +76,13 @@ async def removeStartMessageId(userInfo):
     except: pass
     dbUsers.setStartMessageId(userInfo.userId, None)
 
+def getBusStopNames(busName, directionIndex, date=None, isToday=True):
+    currentDate = datetime.datetime.now(timezone) if isToday else date
+    weekDayIndex = currentDate.weekday()
+    wayPoints = dbMoves.getWayPoints(busName, weekDayIndex, directionIndex)
+    busStopNames = [dbMoves.getBusStop(wp.index).name for wp in wayPoints]
+    return busStopNames
+
 def getMainKeyboard(userInfo):
     user = dbUsers.getUser(userInfo.userId)
     aboutButton = [types.KeyboardButton(text=getTranslation(userInfo, 'button.about'))]
@@ -127,14 +135,16 @@ async def chooseDirectionBusHandler(userInfo, busName):
     await removeLastMessageIds(userInfo)
     await removeBusMessageId(userInfo)
     dbUsers.addUsedBus(userInfo.userId, busName)
-    bus = dbMoves.getBus(busName)
     botMessage = await bot.send_message(userInfo.chatId, getTranslation(userInfo, 'bus.message.direction', [busName]))
     dbUsers.addRemovedMessageIds(userInfo.userId, botMessage.message_id)
-    for direction in range(2):
-        busStops = bus.stops.directions[direction]
-        startStop, middleStop, endStop = busStops[0], busStops[len(busStops) // 2], busStops[-1]
+    currentDate = datetime.datetime.now(timezone)
+    weekDayIndex = currentDate.weekday()
+    directionCount = dbMoves.getDirectionCount(busName, weekDayIndex)
+    for directionIndex in range(directionCount):
+        busStopNames = getBusStopNames(busName, directionIndex)
+        startStop, middleStop, endStop = busStopNames[0], busStopNames[len(busStopNames) // 2], busStopNames[-1]
         directionText = f'<b>{startStop}</b> -> ... -> <b>{middleStop}</b> -> ... -> <b>{endStop}</b>'
-        directionKeyboard = getDirectionKeyboard(userInfo, direction)
+        directionKeyboard = getDirectionKeyboard(userInfo, directionIndex)
         botMessage = await bot.send_message(userInfo.chatId, directionText, reply_markup=directionKeyboard)
         dbUsers.addRemovedMessageIds(userInfo.userId, botMessage.message_id)
 
@@ -193,9 +203,8 @@ async def busStopListHandler(callback: types.CallbackQuery):
     userInfo = getUserInfo(callback=callback)
     await removeLastMessageIds(userInfo)
     busName = dbLocal.getCurrentBus(userInfo.userId)
-    direction = dbLocal.getCurrentDirection(userInfo.userId)
-    bus = dbMoves.getBus(busName)
-    busStopNames = bus.stops.directions[direction]
+    directionIndex = dbLocal.getCurrentDirection(userInfo.userId)
+    busStopNames = getBusStopNames(busName, directionIndex)
     busStopListKeyboard = getBusStopListKeyboard(busStopNames)
     botMessage = await bot.send_message(userInfo.chatId, getTranslation(userInfo, 'busstoplist.message.available'), reply_markup=busStopListKeyboard)
     dbUsers.addRemovedMessageIds(userInfo.userId, botMessage.message_id)
@@ -206,13 +215,14 @@ async def selectedBusStopHandler(callback: types.CallbackQuery):
     await removeLastMessageIds(userInfo)
     busStopIndex = int(userInfo.action.split('_')[1])
     busName = dbLocal.getCurrentBus(userInfo.userId)
-    direction = dbLocal.getCurrentDirection(userInfo.userId)
-    bus = dbMoves.getBus(busName)
-    busStopNames = bus.stops.directions[direction]
-    nearestBusStopName = busStopNames[busStopIndex]
+    directionIndex = dbLocal.getCurrentDirection(userInfo.userId)
+    currentDate = datetime.datetime.now(timezone)
+    weekDayIndex = currentDate.weekday()
+    wayPoints = dbMoves.getWayPoints(busName, weekDayIndex, directionIndex)
+    nearestBusStopIndex = wayPoints[busStopIndex].index
     botMessage = await bot.send_message(userInfo.chatId, getTranslation(userInfo, 'busstoplist.message.success'))
     dbUsers.addRemovedMessageIds(userInfo.userId, botMessage.message_id)
-    await busArrivalTimesHandler(userInfo, nearestBusStopName)
+    await busArrivalTimesHandler(userInfo, nearestBusStopIndex)
 
 def getLocationKeyboard(userInfo):
     button = [types.KeyboardButton(text=getTranslation(userInfo, 'button.location'), request_location=True)]
@@ -238,59 +248,66 @@ async def locationHandler(message: types.location):
     dbUsers.addRemovedMessageIds(userInfo.userId, botMessage.message_id)
     
     busName = dbLocal.getCurrentBus(userInfo.userId)
-    direction = dbLocal.getCurrentDirection(userInfo.userId)
-    bus = dbMoves.getBus(busName)
-    nearestBusStopName = getNearestBusStop(bus, direction, message.location)
-    await busArrivalTimesHandler(userInfo, nearestBusStopName)
+    directionIndex = dbLocal.getCurrentDirection(userInfo.userId)
+    nearestBusStop = getNearestBusStop(busName, directionIndex, message.location)
+    await busArrivalTimesHandler(userInfo, nearestBusStop.index)
 
-async def busArrivalTimesHandler(userInfo, nearestBusStopName):
+def getNeededWayPoint(busStopIndex, wayPoints):
+    for wp in wayPoints: 
+        if busStopIndex == wp.index:
+            return wp
+
+def getBusArrivalTimes(wayPoint):
+    if wayPoint.times is None: return None
+    currentDate = datetime.datetime.now(timezone)
+    currentMinutes = currentDate.hour * 60 + currentDate.minute
+    busArrivalTimes = []
+    for wpt in wayPoint.times:
+        hour, minute = wpt.split(':')
+        minutes = int(hour) * 60 + int(minute)
+        if currentMinutes < minutes:
+            busArrivalTimes.append(wpt)
+    return busArrivalTimes
+
+async def busArrivalTimesHandler(userInfo, nearestBusStopIndex):
     user = dbUsers.getUser(userInfo.userId)
     await bot.edit_message_reply_markup(chat_id=userInfo.chatId, message_id=user.busMessageId, reply_markup=None)
     dbUsers.addRemovedMessageIds(userInfo.userId, user.busMessageId)
     dbUsers.setBusMessageId(userInfo.userId, None)
     busName = dbLocal.getCurrentBus(userInfo.userId)
-    direction = dbLocal.getCurrentDirection(userInfo.userId)
-    bus = dbMoves.getBus(busName)
-    busArrivalTimes = getBusArrivalTimes(userInfo, bus, direction, nearestBusStopName)
+    directionIndex = dbLocal.getCurrentDirection(userInfo.userId)
+    currentDate = datetime.datetime.now(timezone)
+    weekDayIndex = currentDate.weekday()
+    busStop = dbMoves.getBusStop(nearestBusStopIndex)
+    wayPoints = dbMoves.getWayPoints(busName, weekDayIndex, directionIndex)
+    neededWayPoint = getNeededWayPoint(busStop.index, wayPoints)
+    busArrivalTimes = getBusArrivalTimes(neededWayPoint)
     await removeLastMessageIds(userInfo)
     mainKeyboard = getMainKeyboard(userInfo)
     if busArrivalTimes is None:
         botMessage = await bot.send_message(userInfo.chatId, getTranslation(userInfo, 'arrivaltimes.message.error'), reply_markup=mainKeyboard)
     elif busArrivalTimes:
         busArrivalTimesText = ', '.join([f'<b>{busArrivalTimes[0]}</b>'] + busArrivalTimes[1:])
-        botMessage = await bot.send_message(userInfo.chatId, getTranslation(userInfo, 'arrivaltimes.message.success', [busName, nearestBusStopName, busArrivalTimesText]), reply_markup=mainKeyboard)
+        botMessage = await bot.send_message(userInfo.chatId, getTranslation(userInfo, 'arrivaltimes.message.success', [busName, busStop.name, busArrivalTimesText]), reply_markup=mainKeyboard)
         dbUsers.addRemovedMessageIds(userInfo.userId, botMessage.message_id)
-        busStopLocation = dbMoves.getLocation(nearestBusStopName)
-        botMessage = await bot.send_location(userInfo.chatId, latitude=busStopLocation.latitude, longitude=busStopLocation.longitude)
+        botMessage = await bot.send_location(userInfo.chatId, latitude=busStop.location.latitude, longitude=busStop.location.longitude)
     else:
-        botMessage = await bot.send_message(userInfo.chatId, getTranslation(userInfo, 'arrivaltimes.message.empty', [busName, nearestBusStopName]), reply_markup=mainKeyboard)
+        botMessage = await bot.send_message(userInfo.chatId, getTranslation(userInfo, 'arrivaltimes.message.empty', [busName, busStop.name]), reply_markup=mainKeyboard)
     dbUsers.addRemovedMessageIds(userInfo.userId, botMessage.message_id)
     dbLocal.setCurrentBus(userInfo.userId, None)
     dbLocal.setCurrentDirection(userInfo.userId, None)
 
-def getBusArrivalTimes(userInfo, bus, direction, nearestBusStopName):
-    for attempt in range(10):
-        session = MapsSession(showBrowser=False, userDataDir=f'{const.path.userData}-{userInfo.userId}')
-        try:
-            busArrivalTimes = session.getBusArrivalTimes(bus, direction, nearestBusStopName)
-            session.close()
-            break
-        except Exception:
-            session.close()
-            logging.error(format_exc())
-    else: busArrivalTimes = None
-    return busArrivalTimes
-
-def getNearestBusStop(bus, direction, userLocation):
-    allLocations = dbMoves.getAllLocations()
-    currentBusStops = bus.stops.directions[direction]
-    busStopLocations = [ltn for ltn in allLocations if ltn.name in currentBusStops]
-    minDist, nearestBusStop = float('inf'), busStopLocations[0].name
-    for ltn in busStopLocations:
-        dist = getDistanceByHaversine(userLocation, ltn)
+def getNearestBusStop(busName, directionIndex, userLocation):
+    currentDate = datetime.datetime.now(timezone)
+    weekDayIndex = currentDate.weekday()
+    wayPoints = dbMoves.getWayPoints(busName, weekDayIndex, directionIndex)
+    availableBusStops = [dbMoves.getBusStop(wp.index) for wp in wayPoints]
+    minDist, nearestBusStop = float('inf'), availableBusStops[0].name
+    for busStop in availableBusStops:
+        dist = getDistanceByHaversine(userLocation, busStop.location)
         if dist < minDist:
             minDist = dist
-            nearestBusStop = ltn.name
+            nearestBusStop = busStop
     return nearestBusStop
 
 async def incorrectBusNameHandler(message):

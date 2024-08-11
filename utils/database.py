@@ -4,7 +4,7 @@ import os
 
 from utils.funcs import joinPath
 from utils.const import ConstPlenty
-from utils.objects.db import User, Bus, Location
+from utils.objects.db import User, BusStop, WayPoint
 
 const = ConstPlenty()
 
@@ -136,24 +136,40 @@ class dbUsersWorker(dbWorker):
         return permissions
 
 class dbMovesWorker(dbWorker):
-    def getAllBuses(self):
+    def getBusStopByName(self, name):
         dbData = self.get()
-        buses = [Bus(name, dictBus) for name, dictBus in dbData['buses'].items()]
-        return buses
+        for busStopIndex, dictBusStop in dbData['locations'].items():
+            if name == dictBusStop['name']:
+                busStop = BusStop(int(busStopIndex), dictBusStop)
+                return busStop
 
-    def getBus(self, name):
+    def getBusStop(self, index):
         dbData = self.get()
-        dictBus = dbData['buses'][name]
-        bus = Bus(name, dictBus)
-        return bus
+        dictBusStop = dbData['locations'][str(index)]
+        busStop = BusStop(int(index), dictBusStop)
+        return busStop
 
-    def getAllLocations(self):
+    def getAllBusStops(self):
         dbData = self.get()
-        locations = [Location(name, dictLocation) for name, dictLocation in dbData['locations'].items()]
-        return locations
+        allBusStops = [BusStop(index, dictBusStop) for index, dictBusStop in dbData['locations'].items()]
+        return allBusStops
 
-    def getLocation(self, name):
+    def getDirectionCount(self, busName, weekDayIndex):
         dbData = self.get()
-        dictLocation = dbData['locations'][name]
-        location = Location(name, dictLocation)
-        return location
+        dictDirections = dbData['buses'][busName]['week'][weekDayIndex]['direction']
+        directionCount = len(dictDirections)
+        return directionCount
+
+    def getWayPoints(self, busName, weekDayIndex, directionIndex):
+        dbData = self.get()
+        dictWayPoints = dbData['buses'][busName]['week'][weekDayIndex]['direction'][str(directionIndex)]
+        wayPoints = [WayPoint(dwp) for dwp in dictWayPoints]
+        return wayPoints
+
+    def getBusArrivalTimes(self, busName, weekDayIndex, directionIndex, busStopIndex):
+        dbData = self.get()
+        busStopTimes = dbData['buses'][busName]['week'][weekDayIndex]['direction'][str(directionIndex)]
+        for bst in busStopTimes:
+            if int(busStopIndex) == int(bst['index']):
+                busArrivalTimes = bst['times']
+                return busArrivalTimes

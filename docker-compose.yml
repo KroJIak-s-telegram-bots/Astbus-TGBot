@@ -1,12 +1,11 @@
 services:
   astbusbot:
-    image: astbusbot-image:latest
+    image: astbusbot-image
     build:
       context: .
     container_name: astbusbot-container
     restart: always
     volumes:
-      - ./cache:/workspace/cache
       - ./client:/workspace/client
       - ./db:/workspace/db
       - ./utils:/workspace/utils

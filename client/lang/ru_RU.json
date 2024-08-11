@@ -22,9 +22,9 @@
 
   "arrivaltimes.message.error": "Ошибка при попытке поиска. Повторите снова либо обратитесь к разработчику.",
   "arrivaltimes.message.success": "Время прибытия автобуса <b>%{}%</b> на остановке <b>%{}%</b>:\n%{}%",
-  "arrivaltimes.message.empty": "На сегодня автобус <b>%{}%</b> закончил маршрут на остановке <b>%{}%</b>.",
+  "arrivaltimes.message.empty": "На сегодня автобус <b>%{}%</b> закончил маршрут на остановке <b>%{}%</b>",
 
-  "button.about": "Об боте",
+  "button.about": "О боте",
   "button.buses": "Автобусы",
   "button.favourites": "Избранное",
   "button.favourites.add": "Избранное",
