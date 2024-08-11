@@ -38,9 +38,9 @@ class Path:
         self.db = joinPath(self.project, 'db')
         self.moves = joinPath(self.db, 'moves')
         self.users = joinPath(self.db, 'users')
+        self.parser = joinPath(self.project, 'parser')
         self.utils = joinPath(self.project, 'utils')
         self.objects = joinPath(self.utils, 'objects')
-        self.parser = joinPath(self.utils, 'parser')
 
 class File:
     def __init__(self):

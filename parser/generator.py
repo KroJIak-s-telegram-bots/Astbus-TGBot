@@ -6,7 +6,8 @@ from utils.const import ConstPlenty
 from utils.funcs import joinPath
 
 const = ConstPlenty()
-availableBuses = '190;18;45;М6;М4;М1;М5;М2;63;78;М3;37;117;38;4;30;73;28;53;10;33;54с;116;2;90;13;9;54к;19н;58;29;30н;13'
+# 190;
+availableBuses = '18;45;М6;М4;М1;М5;М2;63;78;М3;37;117;38;4;30;73;28;53;10;33;54с;116;2;90;13;9;54к;19н;58;29;30н;13'
 availableBuses = availableBuses.split(';')
 
 def get():
@@ -57,7 +58,7 @@ def saveBusArrivalTimes():
     session.close()
 
 def main():
-    saveBusStopLocations()
+    # saveBusStopLocations()
     saveBusArrivalTimes()
 
 if __name__ == '__main__':

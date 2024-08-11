@@ -91,6 +91,7 @@ class MapsSession:
             self.mouseClick(changeDirectionButton)
             destinationButtons = getDestinationButtons()
             directionCount = len(destinationButtons)
+            # directionCount = 2
         else:
             directionCount = 1
         busStopLocations = {}
@@ -165,6 +166,7 @@ class MapsSession:
             self.mouseClick(changeDirectionButton)
             destinationButtons = getDestinationButtons()
             directionCount = len(destinationButtons)
+            directionCount = 2
         else:
             directionCount = 1
         busDict = {'week': [{'direction': {num: [] for num in range(directionCount)}}] * 5 + [{'direction': {num: [] for num in range(directionCount)}}] * 2}
@@ -196,7 +198,7 @@ class MapsSession:
                     confirmButton = getConfirmButton()
                     confirmButton.click()
                     arrivalTimes = []
-                    self.wait(4)
+                    self.wait(0.5)
                     self.pressHome()
                     while True:
                         arrivalTimeElements = getArrivalTimeElements()
