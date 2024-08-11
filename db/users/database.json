@@ -1,51 +1,5 @@
 {
     "users": {
-        "1250991011": {
-            "login": "krojiak",
-            "fullname": "Андрей Растопшин",
-            "permission": "default",
-            "removedMessageIds": [
-                1733,
-                1734
-            ],
-            "startMessageId": 1722,
-            "busMessageId": null,
-            "favourites": [],
-            "usedBuses": {
-                "М3": 10,
-                "190": 23
-            }
-        },
-        "524725083": {
-            "login": null,
-            "fullname": "Александр Ковалев",
-            "permission": "default",
-            "removedMessageIds": [
-                1448,
-                1449
-            ],
-            "startMessageId": 1438,
-            "busMessageId": null,
-            "favourites": [],
-            "usedBuses": {
-                "М6": 1,
-                "М1": 2
-            }
-        },
-        "747050291": {
-            "login": "vomka",
-            "fullname": "zizya",
-            "permission": "default",
-            "removedMessageIds": [
-                1523
-            ],
-            "startMessageId": 1500,
-            "busMessageId": null,
-            "favourites": [],
-            "usedBuses": {
-                "190": 1
-            }
-        }
     },
     "permissions": {
         "0": "default",
