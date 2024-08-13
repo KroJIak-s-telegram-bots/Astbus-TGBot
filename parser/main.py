@@ -169,8 +169,10 @@ class MapsSession:
             directionCount = 2
         else:
             directionCount = 1
+        if busName == 'М2': startddd, endddd = 1, directionCount + 1
+        else: startddd, endddd = 0, directionCount
         busDict = {'week': [{'direction': {num: [] for num in range(directionCount)}}] * 5 + [{'direction': {num: [] for num in range(directionCount)}}] * 2}
-        for directionIndex in range(directionCount):
+        for directionIndex in range(startddd, endddd):
             if changeDirectionButton:
                 destinationButtons = getDestinationButtons()
                 self.whileClick(destinationButtons[directionIndex])
@@ -182,7 +184,7 @@ class MapsSession:
                 calendarButton = getCalendarButton()
                 calendarButton.click()
                 weekElementList = getWeekElementList()
-                weekElement = weekElementList[2]
+                weekElement = weekElementList[3]
                 dayButtons = getDayButtons(weekElement)
                 dayButtons[dayIndex].click()
                 selectBusStopButton = getSelectBusStopButton()
@@ -198,7 +200,7 @@ class MapsSession:
                     confirmButton = getConfirmButton()
                     confirmButton.click()
                     arrivalTimes = []
-                    self.wait(0.5)
+                    self.wait(1)
                     self.pressHome()
                     while True:
                         arrivalTimeElements = getArrivalTimeElements()
@@ -211,8 +213,10 @@ class MapsSession:
                         arrivalTimes.append(arrivalTime)
                         self.removeElement(arrivalTimeElements[0])
                         if len(arrivalTimeElements) == 1: break
-                    busDict['week'][dayIndex]['direction'][directionIndex].append(arrivalTimes)
-                    print(busStopName, dayIndex, arrivalTimes)
+
+                    realDirection = directionIndex if busName != 'М2' else 2 - directionIndex
+                    busDict['week'][dayIndex]['direction'][realDirection].append(arrivalTimes)
+                    print(busStopName, dayIndex, realDirection, arrivalTimes)
                     selectBusStopButton = getSelectBusStopButton()
                     selectBusStopButton.click()
                     self.wait(0.4)
